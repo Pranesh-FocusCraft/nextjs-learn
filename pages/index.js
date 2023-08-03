@@ -1,8 +1,9 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 function HomePage() {
 	const emailVal = useRef()
 	const feedbackVal = useRef()
+	const [arr, setArr] = useState([])
 
 	const handleSubmit = (event) => {
 		event.preventDefault()
@@ -23,6 +24,12 @@ function HomePage() {
 			.then((a) => console.log(a))
 	}
 
+	const handleClick = () => {
+		fetch('/api/feedback')
+			.then((a) => a.json())
+			.then((a) => setArr(a))
+	}
+
 	return (
 		<div>
 			<h1>The Home Page</h1>
@@ -37,6 +44,17 @@ function HomePage() {
 				</div>
 				<button onClick={handleSubmit}> Send Feedback</button>
 			</form>
+			<hr></hr>
+			<button onClick={handleClick}> Get Data </button>
+			<ul>
+				{arr.map(({ id, email, text }) => (
+					<li key={id} style={{ display: 'flex', gap: 20 }}>
+						<div>{id}</div>
+						<div>{email}</div>
+						<div>{text}</div>
+					</li>
+				))}
+			</ul>
 		</div>
 	)
 }

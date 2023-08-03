@@ -1,6 +1,12 @@
 import fs from 'fs'
 import path from 'path'
 
+const getData = () => {
+	const filePath = path.join(process.cwd(), 'data', 'feedback.json')
+	const fileData = fs.readFileSync(filePath)
+	return { filePath, data: JSON.parse(fileData) }
+}
+
 function handler(req, res) {
 	if (req.method === 'POST') {
 		const email = req.body.email
@@ -12,14 +18,15 @@ function handler(req, res) {
 			text: feedbackText,
 		}
 
-		const filePath = path.join(process.cwd(), 'data', 'feedback.json')
-		const fileData = fs.readFileSync(filePath)
-		const data = JSON.parse(fileData)
+		const { data, filePath } = getData()
 		data.push(newFormData)
 		fs.writeFileSync(filePath, JSON.stringify(data))
-		res.status(201).json({ message: 'Success!', feedback: newFormData })
+		res.status(201).json(newFormData)
+	} else if (req.method === 'GET') {
+		const { data } = getData()
+		res.status(201).json(data)
 	} else {
-		res.status(200).json({ message: 'This works' })
+		res.status(200).json('This works')
 	}
 }
 
