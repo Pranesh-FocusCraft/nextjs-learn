@@ -1,38 +1,39 @@
+import fs from 'fs'
+import path from 'path'
+
+export const getData = () => {
+  const filePath = path.join(process.cwd(), 'data', 'comments.json')
+  const fileData = fs.readFileSync(filePath)
+  return { filePath, data: JSON.parse(fileData) }
+}
+
+function getCommentData(eventId, res) {
+  const { data } = getData()
+  res.status(201).json(data[eventId] ?? [])
+}
+
+function postCommentData(eventId, res, { body: { email, name, comment } }) {
+  if (!email.trim().includes('@') || !name.trim() || !comment.trim()) {
+    res.status(422).json({ message: 'Invalid input' })
+    return
+  }
+
+  const newComment = { time: new Date().toISOString(), email, name, comment }
+
+  const { filePath, data } = getData()
+  data[eventId] ??= []
+  data[eventId].push(newComment)
+
+  fs.writeFileSync(filePath, JSON.stringify(data))
+
+  res.status(201).json({ message: 'Comment added!', newComment })
+}
+
 function handle(req, res) {
-	const evenId = req.query.evenId
-	if (req.method === 'POST') {
-		const { email, name, comment } = req.body
-
-		if (!email.trim().includes('@') || !name.trim() || !comment.trim()) {
-			res.status(422).json({ message: 'Invalid input' })
-			return
-		}
-
-		const newComment = { id: new Date().toISOString(), email, name, comment }
-
-		res.status(201).json({ message: 'Comment added!', newComment })
-		return
-	}
-
-	if (req.method === 'GET') {
-		const comments = [
-			{
-				id: 'c1',
-				email: 'email1@email.com',
-				name: 'name1',
-				comment: 'comment1',
-			},
-			{
-				id: 'c1',
-				email: 'email1@email.com',
-				name: 'name1',
-				comment: 'comment1',
-			},
-		]
-
-		res.status(201).json({ comments })
-		return
-	}
+  const eventId = req.query.eventId
+  if (req.method === 'POST') return postCommentData(eventId, res, req)
+  if (req.method === 'GET') return getCommentData(eventId, res)
+  res.status(201).json({ message: 'Works!' })
 }
 
 export default handle
