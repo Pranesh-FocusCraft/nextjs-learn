@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { storeToDataBase } from '../newsletter'
 
 export const getData = () => {
   const filePath = path.join(process.cwd(), 'data', 'comments.json')
@@ -12,19 +13,19 @@ function getCommentData(eventId, res) {
   res.status(201).json(data[eventId] ?? [])
 }
 
-function postCommentData(eventId, res, { body: { email, name, comment } }) {
+async function postCommentData(
+  eventId,
+  res,
+  { body: { email, name, comment } }
+) {
   if (!email.trim().includes('@') || !name.trim() || !comment.trim()) {
     res.status(422).json({ message: 'Invalid input' })
     return
   }
 
-  const newComment = { time: new Date().toISOString(), email, name, comment }
-
-  const { filePath, data } = getData()
-  data[eventId] ??= []
-  data[eventId].push(newComment)
-
-  fs.writeFileSync(filePath, JSON.stringify(data))
+  const newComment = { eventId, email, name, comment }
+  const response = await storeToDataBase('comments', newComment)
+  newComment.id = response.insertedId.toString()
 
   res.status(201).json({ message: 'Comment added!', newComment })
 }
