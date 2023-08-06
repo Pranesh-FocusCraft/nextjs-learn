@@ -1,25 +1,11 @@
-import { storeToDataBase } from '../newsletter'
-import { MongoClient } from 'mongodb'
-
-export async function getFromDataBase(collectionName, filterParam) {
-  const client = await MongoClient.connect(
-    'mongodb+srv://dbuser:VupAGEY5JlgRluRk@cluster0.gjftkdu.mongodb.net/events?retryWrites=true&w=majority'
-  )
-
-  const db = client.db()
-  const documents = await db
-    .collection(collectionName)
-    .find({ eventId: filterParam }) // if no param sends all data
-    .sort({ _id: -1 }) // param should be the sorting data and -1 sorts descending and thus now gives latest data
-    .toArray() // to convert to array since default doesnt give array
-
-  client.close()
-  return documents
-}
+import { storeToDataBase, getFromDataBase } from '../../../DB/mongodb'
 
 async function getCommentData(eventId, res) {
-  const data = await getFromDataBase('comments', eventId)
-  res.status(201).json(data)
+  const response = await getFromDataBase('comments', eventId)
+  if (typeof response === 'string') {
+    return res.status(500).json({ message: response })
+  }
+  res.status(201).json(response)
 }
 
 async function postCommentData(
@@ -34,6 +20,9 @@ async function postCommentData(
 
   const newComment = { eventId, email, name, comment }
   const response = await storeToDataBase('comments', newComment)
+  if (typeof response === 'string') {
+    return res.status(500).json({ message: response })
+  }
   newComment.id = response.insertedId.toString()
 
   res.status(201).json({ message: 'Comment added!', newComment })

@@ -1,15 +1,4 @@
-import { MongoClient } from 'mongodb'
-
-export async function storeToDataBase(collectionName, data) {
-  const client = await MongoClient.connect(
-    'mongodb+srv://dbuser:VupAGEY5JlgRluRk@cluster0.gjftkdu.mongodb.net/events?retryWrites=true&w=majority'
-  )
-
-  const db = client.db()
-  const res = await db.collection(collectionName).insertOne(data)
-  client.close()
-  return res
-}
+import { storeToDataBase } from '../../DB/mongodb'
 
 async function handle(req, res) {
   if (req.method === 'POST') {
@@ -20,8 +9,10 @@ async function handle(req, res) {
       return
     }
 
-    await storeToDataBase('newsletter', { email })
-
+    const response = await storeToDataBase('newsletter', { email })
+    if (typeof response === 'string') {
+      return res.status(500).json({ message: response })
+    }
     res.status(201).json({ message: 'Signed up!' })
   }
 }
