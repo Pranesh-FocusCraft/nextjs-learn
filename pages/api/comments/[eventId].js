@@ -1,16 +1,25 @@
-import fs from 'fs'
-import path from 'path'
 import { storeToDataBase } from '../newsletter'
+import { MongoClient } from 'mongodb'
 
-export const getData = () => {
-  const filePath = path.join(process.cwd(), 'data', 'comments.json')
-  const fileData = fs.readFileSync(filePath)
-  return { filePath, data: JSON.parse(fileData) }
+export async function getFromDataBase(collectionName, filterParam) {
+  const client = await MongoClient.connect(
+    'mongodb+srv://dbuser:VupAGEY5JlgRluRk@cluster0.gjftkdu.mongodb.net/events?retryWrites=true&w=majority'
+  )
+
+  const db = client.db()
+  const documents = await db
+    .collection(collectionName)
+    .find({ eventId: filterParam }) // if no param sends all data
+    .sort({ _id: -1 }) // param should be the sorting data and -1 sorts descending and thus now gives latest data
+    .toArray() // to convert to array since default doesnt give array
+
+  client.close()
+  return documents
 }
 
-function getCommentData(eventId, res) {
-  const { data } = getData()
-  res.status(201).json(data[eventId] ?? [])
+async function getCommentData(eventId, res) {
+  const data = await getFromDataBase('comments', eventId)
+  res.status(201).json(data)
 }
 
 async function postCommentData(
