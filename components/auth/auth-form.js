@@ -43,6 +43,7 @@ function AuthForm() {
 				alert(result.message)
 			} catch (err) {
 				console.log(err)
+				alert(err.message)
 			}
 		}
 	}
